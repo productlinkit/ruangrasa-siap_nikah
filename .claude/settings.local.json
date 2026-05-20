@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -lt \"/Users/linkit-egi/Slicing Project/ruangrasa-siapnikah-main/src/assets\" | head -8; echo \"---public---\"; ls -la \"/Users/linkit-egi/Slicing Project/ruangrasa-siapnikah-main/public\" 2>/dev/null || echo \"no public dir\"; echo \"---downloads---\"; ls -lt ~/Downloads 2>/dev/null | head -6)",
+      "Read(//Users/linkit-egi/Downloads/**)",
+      "Bash(cp ~/Downloads/logo-siapnikah.png src/assets/sn-logo.png)",
+      "Bash(cp ~/Downloads/logo-siapnikah.png public/favicon.png)"
+    ]
+  }
+}

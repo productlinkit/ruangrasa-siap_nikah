@@ -1,0 +1,301 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600&family=Inter:wght@300;400;500;600&display=swap');
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* RuangRasa Siap Nikah — Editorial Coach Design System
+   Tone: thoughtful, aspirational, grounded.
+   Premium magazine × counselor's office. Warm terracotta/amber on cream. */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Custom palette tokens (used as bg-*, text-*, border-*) */
+  --color-terracotta: var(--terracotta);
+  --color-terracotta-deep: var(--terracotta-deep);
+  --color-amber-warm: var(--amber-warm);
+  --color-amber-soft: var(--amber-soft);
+  --color-cream: var(--cream);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-tape: var(--tape);
+  --color-forest: var(--forest);
+
+  --font-display: "DM Serif Display", "Cormorant Garamond", "Times New Roman", serif;
+  --font-serif: "Cormorant Garamond", "Times New Roman", serif;
+  --font-body: "Inter", system-ui, sans-serif;
+}
+
+:root {
+  --radius: 0.25rem;
+
+  /* Brand palette — converted to oklch
+     #854f0b terracotta · #ef9f27 amber · #faeeda surface · #f5f2ea bg cream · #2c2c2a ink */
+  --terracotta: oklch(0.46 0.115 55);          /* #854f0b */
+  --terracotta-deep: oklch(0.36 0.10 55);
+  --amber-warm: oklch(0.78 0.155 70);          /* #ef9f27 */
+  --amber-soft: oklch(0.94 0.04 75);           /* #faeeda */
+  --cream: oklch(0.96 0.012 80);               /* #f5f2ea */
+  --paper: oklch(0.985 0.008 80);              /* #fffef5-ish */
+  --ink: oklch(0.24 0.005 60);                 /* #2c2c2a */
+  --ink-soft: oklch(0.45 0.01 60);
+  --tape: oklch(0.85 0.08 75 / 0.7);
+  --forest: oklch(0.36 0.06 145);              /* CTA contrast text */
+
+  --background: var(--cream);
+  --foreground: var(--ink);
+  --card: var(--paper);
+  --card-foreground: var(--ink);
+  --popover: var(--paper);
+  --popover-foreground: var(--ink);
+  --primary: var(--terracotta);
+  --primary-foreground: var(--cream);
+  --secondary: var(--amber-soft);
+  --secondary-foreground: var(--ink);
+  --muted: var(--amber-soft);
+  --muted-foreground: var(--ink-soft);
+  --accent: var(--amber-warm);
+  --accent-foreground: var(--ink);
+  --destructive: oklch(0.55 0.2 27);
+  --destructive-foreground: var(--cream);
+  --border: oklch(0.85 0.025 75);
+  --input: oklch(0.85 0.025 75);
+  --ring: var(--terracotta);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-cream);
+    color: var(--color-foreground);
+    font-family: var(--font-body);
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+  }
+
+  ::selection {
+    background-color: var(--color-terracotta);
+    color: var(--color-cream);
+  }
+}
+
+/* === Editorial utilities === */
+
+.font-display { font-family: var(--font-display); }
+.font-serif { font-family: var(--font-serif); }
+.font-body { font-family: var(--font-body); }
+
+.italic-display {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* Torn paper edges using SVG mask */
+.torn-top {
+  -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 60' preserveAspectRatio='none'><path d='M0,60 L0,30 C50,15 120,40 180,25 C250,8 320,38 400,28 C480,18 540,42 620,30 C700,18 770,40 850,28 C930,16 1000,38 1080,30 C1140,24 1170,32 1200,28 L1200,60 Z' fill='black'/></svg>");
+  mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 60' preserveAspectRatio='none'><path d='M0,60 L0,30 C50,15 120,40 180,25 C250,8 320,38 400,28 C480,18 540,42 620,30 C700,18 770,40 850,28 C930,16 1000,38 1080,30 C1140,24 1170,32 1200,28 L1200,60 Z' fill='black'/></svg>");
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+.torn-bottom {
+  -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 60' preserveAspectRatio='none'><path d='M0,0 L1200,0 L1200,28 C1170,32 1140,24 1080,30 C1000,38 930,16 850,28 C770,40 700,18 620,30 C540,42 480,18 400,28 C320,38 250,8 180,25 C120,40 50,15 0,30 Z' fill='black'/></svg>");
+  mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 60' preserveAspectRatio='none'><path d='M0,0 L1200,0 L1200,28 C1170,32 1140,24 1080,30 C1000,38 930,16 850,28 C770,40 700,18 620,30 C540,42 480,18 400,28 C320,38 250,8 180,25 C120,40 50,15 0,30 Z' fill='black'/></svg>");
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+/* Polaroid card */
+.polaroid {
+  background: var(--paper);
+  padding: 0.75rem 0.75rem 2.25rem;
+  box-shadow:
+    0 1px 2px oklch(0 0 0 / 0.08),
+    0 12px 28px -12px oklch(0 0 0 / 0.35);
+  border-radius: 2px;
+}
+
+/* Washi tape */
+.tape {
+  position: absolute;
+  background: var(--tape);
+  border-left: 1px dashed oklch(0 0 0 / 0.06);
+  border-right: 1px dashed oklch(0 0 0 / 0.06);
+  width: 80px;
+  height: 22px;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-3deg);
+  box-shadow: 0 1px 3px oklch(0 0 0 / 0.1);
+}
+
+/* Note / journal sticky card */
+.note {
+  background: var(--paper);
+  padding: 1rem 1.25rem;
+  box-shadow:
+    0 1px 2px oklch(0 0 0 / 0.06),
+    0 8px 20px -10px oklch(0 0 0 / 0.25);
+  border-radius: 2px;
+}
+
+/* Journal entry — sticky note style with amber left border */
+.journal-card {
+  background: var(--paper);
+  padding: 1.5rem 1.75rem;
+  border-left: 3px solid var(--amber-warm);
+  box-shadow:
+    0 1px 2px oklch(0 0 0 / 0.06),
+    0 12px 28px -14px oklch(0 0 0 / 0.25);
+  border-radius: 2px;
+}
+
+/* Pill button — primary (amber, ink text) */
+.pill-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.95rem 2.1rem;
+  background: var(--amber-warm);
+  color: var(--forest);
+  border: 1px solid oklch(0 0 0 / 0.08);
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  cursor: pointer;
+}
+.pill-btn:hover {
+  background: var(--terracotta);
+  color: var(--cream);
+  transform: translateY(-1px);
+}
+
+/* Ghost button — outline on cream */
+.pill-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.95rem 2.1rem;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  cursor: pointer;
+}
+.pill-btn-ghost:hover {
+  background: var(--ink);
+  color: var(--cream);
+}
+
+.link-underline {
+  position: relative;
+  display: inline-block;
+}
+.link-underline::after {
+  content: "";
+  position: absolute;
+  left: 0; bottom: -2px;
+  width: 100%; height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.link-underline:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* Grain overlay */
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.08;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* Concentric rings background pattern (waitlist section) */
+.rings-bg {
+  background-image:
+    radial-gradient(circle, transparent 39%, var(--amber-warm) 39.5%, var(--amber-warm) 40%, transparent 40.5%),
+    radial-gradient(circle, transparent 29%, var(--amber-warm) 29.5%, var(--amber-warm) 30%, transparent 30.5%),
+    radial-gradient(circle, transparent 19%, var(--amber-warm) 19.5%, var(--amber-warm) 20%, transparent 20.5%);
+  background-size: 600px 600px;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.06;
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+  50% { transform: translateY(-8px) rotate(var(--r, 0deg)); }
+}
+.float-slow { animation: float-slow 6s ease-in-out infinite; }
+
+/* Dotted curriculum path (S04) */
+.dotted-path {
+  background-image: radial-gradient(circle, var(--amber-warm) 2px, transparent 2.5px);
+  background-size: 16px 4px;
+  background-repeat: repeat-x;
+  background-position: center;
+  height: 4px;
+}
