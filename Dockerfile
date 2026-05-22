@@ -1,5 +1,5 @@
 # Use Bun image for both build and runtime
-FROM oven/bun:latest AS builder
+FROM node:24-alpine AS builder
 WORKDIR /app
 
 # Copy lockfile and package manifest for cached installs
@@ -9,8 +9,8 @@ COPY package.json bunfig.toml bun.lockb ./
 COPY . .
 
 # Install dependencies and build
-RUN bun install --production=false
-RUN bun run build
+RUN npm install --legacy-peer-deps
+RUN npm run build
 
 FROM oven/bun:latest AS runner
 WORKDIR /app
