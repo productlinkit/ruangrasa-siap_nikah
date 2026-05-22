@@ -6,4 +6,12 @@
 // You can pass additional config via defineConfig({ vite: { ... } }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
-export default defineConfig();
+// Allow Vite preview to accept requests for the project's host when running in container
+export default defineConfig({
+	vite: {
+		preview: {
+			// Add the hostname used in the container/runtime so Vite doesn't block the request
+			allowedHosts: ["siapnikah.ruangrasa.co"],
+		},
+	},
+});
