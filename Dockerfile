@@ -21,4 +21,4 @@ COPY --from=builder /app .
 
 # Expose port and run a small Bun static server that serves the built bundle
 EXPOSE 5173
-CMD ["bun", "serve-static.js"]
+CMD ["bun", "run", "preview", "--", "--host", "0.0.0.0", "--port", "5173"]

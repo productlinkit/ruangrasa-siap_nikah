@@ -1,32 +1,35 @@
-# Multi-stage build: build with Bun, serve static files with nginx
-FROM oven/bun:latest AS builder
+# ---------- Builder ----------
+FROM node:18-bullseye AS builder
+
+# Set working dir
 WORKDIR /app
 
-# Copy manifests and lockfile first for caching
-COPY package.json bunfig.toml bun.lockb ./
+# Install dependencies only based on lockfile for reproducible builds
+COPY package.json package-lock.json ./
+# If your project uses additional lockfiles (bun.lockb / pnpm-lock.yaml), adapt accordingly.
+RUN npm ci --silent
+
+# Copy rest of source
 COPY . .
 
-# Install deps and build client
-RUN bun install
-RUN bun run build
+# Build the production assets
+# Assumes "build" script in package.json (vite build)
+RUN npm run build
 
-FROM nginx:stable-alpine AS runner
+# ---------- Production (nginx) ----------
+FROM nginx:1.25-alpine AS production
 
-# Remove default nginx content so our app files always take precedence
+# Remove default nginx content
 RUN rm -rf /usr/share/nginx/html/*
 
-# Ensure static entry points are present: copy root index.html and public/ if available
-COPY --from=builder /app/index.html /usr/share/nginx/html/ || true
-COPY --from=builder /app/public/ /usr/share/nginx/html/ || true
+# Copy built assets from builder
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy client build if present (some build setups output to dist/client)
-COPY --from=builder /app/dist/client/ /usr/share/nginx/html/ || true
-
-# Also copy from dist/ in case build outputs static files there
-COPY --from=builder /app/dist/ /usr/share/nginx/html/ || true
-
-# Nginx config
+# Copy custom nginx config (optional but recommended for SPA routing)
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Expose port (optional, container can still map ports)
 EXPOSE 80
+
+# Use nginx entrypoint/cmd
 CMD ["nginx", "-g", "daemon off;"]
