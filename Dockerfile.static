@@ -11,7 +11,17 @@ RUN bun install
 RUN bun run build
 
 FROM nginx:stable-alpine AS runner
-COPY --from=builder /app/dist/client /usr/share/nginx/html
+
+# Remove default nginx content so our app files always take precedence
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copy client build if present (some build setups output to dist/client)
+COPY --from=builder /app/dist/client/ /usr/share/nginx/html/
+
+# Also copy from dist/ in case build outputs static files there
+COPY --from=builder /app/dist/ /usr/share/nginx/html/
+
+# Nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
