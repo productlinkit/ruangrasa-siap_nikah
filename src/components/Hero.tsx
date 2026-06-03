@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { gsap } from "gsap";
 import heroCouple from "@/assets/sn-hero-couple.jpg";
+import { openChatWidget } from "@/lib/chat-events";
 
 export function Hero() {
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -106,7 +107,14 @@ export function Hero() {
             transition={{ delay: 2, duration: 0.8 }}
             className="mt-10 flex flex-wrap items-center gap-4"
           >
-            <a href="#assessment" className="pill-btn">
+            <a
+              href="#assessment"
+              onClick={(e) => {
+                e.preventDefault();
+                openChatWidget();
+              }}
+              className="pill-btn"
+            >
               Mulai Persiapanku
             </a>
             <a href="#kurikulum" className="pill-btn-ghost">

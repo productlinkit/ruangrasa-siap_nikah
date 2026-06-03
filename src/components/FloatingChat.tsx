@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, X, Send, Sparkles, Heart } from "lucide-react";
 import { chatWithGroq, type GroqMessage } from "@/lib/groq";
 import { submitWaitlist, buildChatSummary } from "@/lib/sheets";
+import { CHAT_OPEN_EVENT } from "@/lib/chat-events";
 
 type Message = {
   id: number;
@@ -46,9 +47,15 @@ export function FloatingChat() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, open, isLoading, showWaitlist]);
 
+  useEffect(() => {
+    const handler = () => setOpen(true);
+    window.addEventListener(CHAT_OPEN_EVENT, handler);
+    return () => window.removeEventListener(CHAT_OPEN_EVENT, handler);
+  }, []);
+
   const sendMessage = async (text: string) => {
     const trimmed = text.trim();
-    if (!trimmed || isLoading) return;
+    if (!trimmed || isLoading || waitlistSubmitted) return;
 
     if (userMessageCount >= FREE_MESSAGE_LIMIT && !waitlistSubmitted) {
       setShowWaitlist(true);
@@ -136,6 +143,7 @@ export function FloatingChat() {
         whatsapp: phone,
         summary: buildChatSummary(messages),
         sheetName: "siap-nikah",
+        source: "pasangan.ruangrasa (chat widget)",
       });
 
       setWaitlistSubmitted(true);
@@ -145,7 +153,7 @@ export function FloatingChat() {
         {
           id: Date.now(),
           role: "bot",
-          text: `Terima kasih, ${name}! 🌿 Kamu sudah masuk waitlist. Kami akan kabari via WhatsApp begitu modul pertama siap. Sekarang yuk lanjut ngobrol — mau bahas apa lagi?`,
+          text: `Terima kasih, ${name}! 🌿 Kamu sudah resmi masuk waitlist RuangRasa Siap Nikah. Tim kami akan menghubungimu via WhatsApp begitu modul pertama siap diluncurkan. Sambil menunggu, jaga komunikasi hangat dengan pasanganmu ya — sampai jumpa di pesan berikutnya. 💌`,
         },
       ]);
     } catch (err) {
@@ -157,7 +165,7 @@ export function FloatingChat() {
     }
   };
 
-  const canType = !isLoading && !showWaitlist;
+  const canType = !isLoading && !showWaitlist && !waitlistSubmitted;
 
   return (
     <>
@@ -205,7 +213,7 @@ export function FloatingChat() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.25, ease: [0.2, 0.8, 0.2, 1] }}
-            className="fixed bottom-24 right-6 z-50 flex h-[70vh] max-h-[600px] w-[calc(100vw-3rem)] max-w-sm flex-col overflow-hidden rounded-2xl border border-ink/10 bg-cream shadow-2xl md:bottom-28 md:right-8"
+            className="fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-hidden bg-cream md:inset-auto md:bottom-28 md:right-8 md:h-[70vh] md:max-h-150 md:w-[calc(100vw-3rem)] md:max-w-sm md:rounded-2xl md:border md:border-ink/10 md:shadow-2xl"
           >
             {/* Header */}
             <div className="flex items-center gap-3 border-b border-ink/10 bg-ink px-5 py-4 text-cream">
@@ -220,9 +228,21 @@ export function FloatingChat() {
                   Coach RuangRasa
                 </p>
                 <p className="text-[11px] uppercase tracking-[0.18em] text-cream/60">
-                  {isLoading ? "Sedang mengetik..." : "Online · Siap mendengarkan"}
+                  {waitlistSubmitted
+                    ? "Terdaftar · Menunggu launch"
+                    : isLoading
+                    ? "Sedang mengetik..."
+                    : "Online · Siap mendengarkan"}
                 </p>
               </div>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Tutup chat"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-cream/70 transition-colors hover:bg-cream/10 hover:text-cream"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
             {/* Messages */}
@@ -371,7 +391,9 @@ export function FloatingChat() {
                 onChange={(e) => setInput(e.target.value)}
                 disabled={!canType}
                 placeholder={
-                  showWaitlist
+                  waitlistSubmitted
+                    ? "Chat ditutup — sampai jumpa saat launch ✨"
+                    : showWaitlist
                     ? "Isi waitlist dulu yuk..."
                     : isLoading
                     ? "Menunggu jawaban..."

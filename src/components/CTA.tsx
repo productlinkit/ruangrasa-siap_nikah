@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import ctaJoyful from "@/assets/sn-cta-joyful.jpg";
+import { openChatWidget } from "@/lib/chat-events";
 
 export function CTA() {
   return (
@@ -53,7 +54,14 @@ export function CTA() {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="mt-10"
           >
-            <a href="#assessment" className="pill-btn">
+            <a
+              href="#assessment"
+              onClick={(e) => {
+                e.preventDefault();
+                openChatWidget();
+              }}
+              className="pill-btn"
+            >
               Mulai Assessment Gratis
             </a>
           </motion.div>

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import logo from "@/assets/sn-logo.png";
+import { openChatWidget } from "@/lib/chat-events";
 
 const links = [
   { label: "Realita", href: "#realita" },
@@ -99,6 +100,16 @@ export function SiteNav() {
             transition={{ duration: 0.25 }}
             className="fixed inset-0 z-40 flex flex-col bg-cream/95 backdrop-blur-md md:hidden"
           >
+            {/* Close button inside overlay */}
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              aria-label="Tutup menu"
+              className="absolute top-6 right-6 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-ink/15 bg-paper text-ink shadow-sm transition-colors hover:border-terracotta hover:text-terracotta"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
             <div className="flex-1 overflow-y-auto px-8 pt-28 pb-12">
               <p className="mb-6 text-[11px] uppercase tracking-[0.22em] text-ink/50">
                 Menu
@@ -132,7 +143,11 @@ export function SiteNav() {
               >
                 <a
                   href="#waitlist"
-                  onClick={() => setOpen(false)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setOpen(false);
+                    openChatWidget();
+                  }}
                   className="inline-flex items-center justify-center rounded-full bg-terracotta px-6 py-3 text-sm font-medium tracking-wide text-cream shadow-lg shadow-terracotta/20 transition-transform active:scale-95"
                 >
                   Daftar Waitlist

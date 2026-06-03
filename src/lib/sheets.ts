@@ -3,6 +3,7 @@ export type WaitlistPayload = {
   whatsapp: string;
   summary?: string;
   sheetName?: "Sheet1" | "siap-nikah";
+  source?: string;
 };
 
 export async function submitWaitlist(payload: WaitlistPayload): Promise<void> {
@@ -19,7 +20,7 @@ export async function submitWaitlist(payload: WaitlistPayload): Promise<void> {
     fullName: payload.fullName,
     whatsapp: payload.whatsapp,
     summary: payload.summary || "",
-    source: "pasangan.ruangrasa (chat widget)",
+    source: payload.source || "pasangan.ruangrasa",
     userAgent:
       typeof navigator !== "undefined" ? navigator.userAgent : "",
   };
