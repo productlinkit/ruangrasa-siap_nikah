@@ -20,7 +20,7 @@ export async function submitWaitlist(payload: WaitlistPayload): Promise<void> {
     fullName: payload.fullName,
     whatsapp: payload.whatsapp,
     summary: payload.summary || "",
-    source: payload.source || "pasangan.ruangrasa",
+    source: payload.source || "siapnikah.ruangrasa",
     userAgent:
       typeof navigator !== "undefined" ? navigator.userAgent : "",
   };

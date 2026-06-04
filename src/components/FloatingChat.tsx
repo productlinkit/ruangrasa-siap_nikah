@@ -143,7 +143,7 @@ export function FloatingChat() {
         whatsapp: phone,
         summary: buildChatSummary(messages),
         sheetName: "siap-nikah",
-        source: "pasangan.ruangrasa (chat widget)",
+        source: "siapnikah.ruangrasa (chat widget)",
       });
 
       setWaitlistSubmitted(true);

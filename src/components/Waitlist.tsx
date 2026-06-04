@@ -35,7 +35,7 @@ export function Waitlist() {
         fullName: trimmedName,
         whatsapp: trimmedPhone,
         sheetName: "siap-nikah",
-        source: "pasangan.ruangrasa (waitlist section)",
+        source: "siapnikah.ruangrasa (waitlist section)",
       });
       setSubmitted(true);
     } catch (err) {
