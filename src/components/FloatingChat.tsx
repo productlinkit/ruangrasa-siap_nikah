@@ -27,6 +27,31 @@ const SUGGESTIONS = [
 ];
 
 const FREE_MESSAGE_LIMIT = 5;
+const MIN_THINKING_MS = 3000;
+const TYPING_SPEED_MS = 18;
+
+const URL_REGEX = /(https?:\/\/[^\s]+|(?:[\w-]+\.)+(?:co|com|id|net|org|app|io)(?:\/[^\s]*)?)/gi;
+
+function renderWithLinks(text: string) {
+  const parts = text.split(URL_REGEX);
+  return parts.map((part, i) => {
+    if (i % 2 === 1) {
+      const href = part.startsWith("http") ? part : `https://${part}`;
+      return (
+        <a
+          key={i}
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-terracotta underline decoration-terracotta/40 underline-offset-2 hover:decoration-terracotta"
+        >
+          {part}
+        </a>
+      );
+    }
+    return <span key={i}>{part}</span>;
+  });
+}
 
 export function FloatingChat() {
   const [open, setOpen] = useState(false);
@@ -41,7 +66,9 @@ export function FloatingChat() {
   const [waitlistPhone, setWaitlistPhone] = useState("");
   const [waitlistError, setWaitlistError] = useState("");
   const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
+  const [typingMessageId, setTypingMessageId] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const typingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -53,9 +80,32 @@ export function FloatingChat() {
     return () => window.removeEventListener(CHAT_OPEN_EVENT, handler);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
+    };
+  }, []);
+
+  const playTypingAnimation = (botId: number, fullText: string, onComplete?: () => void) => {
+    setTypingMessageId(botId);
+    let i = 0;
+    typingIntervalRef.current = setInterval(() => {
+      i++;
+      setMessages((prev) =>
+        prev.map((m) => (m.id === botId ? { ...m, text: fullText.slice(0, i) } : m)),
+      );
+      if (i >= fullText.length) {
+        if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
+        typingIntervalRef.current = null;
+        setTypingMessageId(null);
+        onComplete?.();
+      }
+    }, TYPING_SPEED_MS);
+  };
+
   const sendMessage = async (text: string) => {
     const trimmed = text.trim();
-    if (!trimmed || isLoading || waitlistSubmitted) return;
+    if (!trimmed || isLoading || waitlistSubmitted || typingMessageId !== null) return;
 
     if (userMessageCount >= FREE_MESSAGE_LIMIT && !waitlistSubmitted) {
       setShowWaitlist(true);
@@ -86,17 +136,23 @@ export function FloatingChat() {
       : undefined;
 
     try {
-      const reply = await chatWithGroq(history, { extraSystem });
+      const [reply] = await Promise.all([
+        chatWithGroq(history, { extraSystem }),
+        new Promise((resolve) => setTimeout(resolve, MIN_THINKING_MS)),
+      ]);
       const newCount = userMessageCount + 1;
       setUserMessageCount(newCount);
-      setMessages((prev) => [
-        ...prev,
-        { id: Date.now() + 1, role: "bot", text: reply },
-      ]);
+      setIsLoading(false);
 
-      if (newCount >= FREE_MESSAGE_LIMIT && !waitlistSubmitted) {
-        setTimeout(() => setShowWaitlist(true), 400);
-      }
+      const botId = Date.now() + 1;
+      setMessages((prev) => [...prev, { id: botId, role: "bot", text: "" }]);
+
+      playTypingAnimation(botId, reply, () => {
+        if (newCount >= FREE_MESSAGE_LIMIT && !waitlistSubmitted) {
+          setTimeout(() => setShowWaitlist(true), 400);
+        }
+      });
+      return;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Terjadi kesalahan.";
       setMessages((prev) => [
@@ -165,7 +221,8 @@ export function FloatingChat() {
     }
   };
 
-  const canType = !isLoading && !showWaitlist && !waitlistSubmitted;
+  const isTyping = typingMessageId !== null;
+  const canType = !isLoading && !isTyping && !showWaitlist && !waitlistSubmitted;
 
   return (
     <>
@@ -231,6 +288,8 @@ export function FloatingChat() {
                   {waitlistSubmitted
                     ? "Terdaftar · Menunggu launch"
                     : isLoading
+                    ? "Sedang berpikir..."
+                    : isTyping
                     ? "Sedang mengetik..."
                     : "Online · Siap mendengarkan"}
                 </p>
@@ -262,7 +321,10 @@ export function FloatingChat() {
                         : "rounded-bl-sm bg-ink/5 text-ink"
                     }`}
                   >
-                    {m.text}
+                    {m.role === "bot" ? renderWithLinks(m.text) : m.text}
+                    {typingMessageId === m.id && (
+                      <span className="ml-0.5 inline-block h-3.5 w-0.5 -mb-0.5 animate-pulse bg-terracotta align-middle" />
+                    )}
                   </div>
                 </motion.div>
               ))}
@@ -396,7 +458,9 @@ export function FloatingChat() {
                     : showWaitlist
                     ? "Isi waitlist dulu yuk..."
                     : isLoading
-                    ? "Menunggu jawaban..."
+                    ? "Coach sedang berpikir..."
+                    : isTyping
+                    ? "Coach sedang mengetik..."
                     : "Tulis pesanmu..."
                 }
                 className="flex-1 rounded-full border border-ink/15 bg-cream px-4 py-2.5 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-terracotta disabled:opacity-60"
