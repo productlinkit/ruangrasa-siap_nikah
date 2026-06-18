@@ -11,27 +11,46 @@ import { FAQ } from "@/components/FAQ";
 import { CTA } from "@/components/CTA";
 import { Footer } from "@/components/Footer";
 import { FloatingChat } from "@/components/FloatingChat";
+import {
+  SITE_URL,
+  OG_IMAGE_URL,
+  buildOrganizationLd,
+  buildWebSiteLd,
+  buildFaqLd,
+} from "@/lib/seo";
+import { FAQS } from "@/lib/faqs";
+
+const PAGE_TITLE =
+  "RuangRasa Siap Nikah · Coach AI untuk Persiapan Komunikasi Sebelum Menikah";
+const PAGE_DESCRIPTION =
+  "Assessment gratis 7 menit + 5 modul harian untuk komunikasi, konflik, ekspektasi, emosi, dan kebiasaan hubungan sehat. Bukan soal menemukan orang yang tepat, tapi jadi pasangan yang tepat.";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
+      { title: PAGE_TITLE },
+      { name: "description", content: PAGE_DESCRIPTION },
+      { property: "og:url", content: SITE_URL },
+      { property: "og:title", content: PAGE_TITLE },
+      { property: "og:description", content: PAGE_DESCRIPTION },
+      { property: "og:image", content: OG_IMAGE_URL },
+      { name: "twitter:title", content: PAGE_TITLE },
+      { name: "twitter:description", content: PAGE_DESCRIPTION },
+      { name: "twitter:image", content: OG_IMAGE_URL },
+    ],
+    links: [{ rel: "canonical", href: SITE_URL }],
+    scripts: [
       {
-        title:
-          "RuangRasa Siap Nikah · Coach AI untuk Persiapan Komunikasi Sebelum Menikah",
+        type: "application/ld+json",
+        children: JSON.stringify(buildOrganizationLd()),
       },
       {
-        name: "description",
-        content:
-          "Bukan soal menemukan orang yang tepat, tapi jadi pasangan yang tepat. Coach AI yang bantu kamu membangun keterampilan komunikasi & emosional sebelum masalah datang.",
+        type: "application/ld+json",
+        children: JSON.stringify(buildWebSiteLd()),
       },
       {
-        property: "og:title",
-        content: "RuangRasa Siap Nikah · Bersiap sebelum hari H",
-      },
-      {
-        property: "og:description",
-        content:
-          "Assessment gratis 7 menit + 5 modul harian untuk komunikasi, konflik, ekspektasi, emosi, dan kebiasaan hubungan sehat.",
+        type: "application/ld+json",
+        children: JSON.stringify(buildFaqLd(FAQS)),
       },
     ],
   }),
