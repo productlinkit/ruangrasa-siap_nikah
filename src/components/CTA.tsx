@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
+import { Link } from "@tanstack/react-router";
 import ctaJoyful from "@/assets/sn-cta-joyful.jpg";
-import { openChatWidget } from "@/lib/chat-events";
 
 export function CTA() {
   return (
@@ -54,16 +54,9 @@ export function CTA() {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="mt-10"
           >
-            <a
-              href="#assessment"
-              onClick={(e) => {
-                e.preventDefault();
-                openChatWidget();
-              }}
-              className="pill-btn"
-            >
+            <Link to="/" className="pill-btn">
               Mulai Assessment Gratis
-            </a>
+            </Link>
           </motion.div>
         </div>
       </div>

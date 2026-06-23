@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { openChatWidget } from "@/lib/chat-events";
+import { Link } from "@tanstack/react-router";
 
 export function Assessment() {
   return (
@@ -35,16 +35,9 @@ export function Assessment() {
           </p>
 
           <div className="mt-10 flex justify-center">
-            <a
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                openChatWidget();
-              }}
-              className="pill-btn"
-            >
+            <Link to="/" className="pill-btn">
               Mulai Sekarang Gratis
-            </a>
+            </Link>
           </div>
 
           {/* Sample result preview — blurred */}

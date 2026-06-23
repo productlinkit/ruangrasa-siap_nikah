@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import logo from "@/assets/sn-logo.png";
-import { openChatWidget } from "@/lib/chat-events";
 
 const links = [
   { label: "Realita", href: "#realita" },
@@ -141,17 +141,13 @@ export function SiteNav() {
                 transition={{ delay: 0.4, duration: 0.3 }}
                 className="mt-10"
               >
-                <a
-                  href="#waitlist"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setOpen(false);
-                    openChatWidget();
-                  }}
+                <Link
+                  to="/"
+                  onClick={() => setOpen(false)}
                   className="inline-flex items-center justify-center rounded-full bg-terracotta px-6 py-3 text-sm font-medium tracking-wide text-cream shadow-lg shadow-terracotta/20 transition-transform active:scale-95"
                 >
-                  Daftar Waitlist
-                </a>
+                  Mulai Sekarang
+                </Link>
                 <p className="mt-6 text-xs leading-relaxed text-ink-soft">
                   RuangRasa Siap Nikah — coach AI untuk persiapan komunikasi & emosional sebelum hari H.
                 </p>

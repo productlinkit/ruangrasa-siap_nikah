@@ -1,4 +1,6 @@
 export const SITE_URL = "https://siapnikah.ruangrasa.co";
+export const EXPLORE_URL = `${SITE_URL}/explore`;
+export const PARENT_SITE_URL = "https://ruangrasa.co";
 export const SITE_NAME = "RuangRasa Siap Nikah";
 export const ORG_NAME = "RuangRasa";
 export const SITE_LOCALE = "id_ID";
