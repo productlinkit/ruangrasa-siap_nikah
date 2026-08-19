@@ -39,7 +39,7 @@ export async function chatWithGroq(
   options?: { extraSystem?: string },
 ): Promise<string> {
   const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-  const model = import.meta.env.VITE_GROQ_MODEL || "llama-3.3-70b-versatile";
+  const model = import.meta.env.VITE_GROQ_MODEL || "openai/gpt-oss-120b";
 
   if (!apiKey) {
     throw new Error("VITE_GROQ_API_KEY belum di-set di environment.");
@@ -63,6 +63,11 @@ export async function chatWithGroq(
       messages: [...systemMessages, ...messages],
       temperature: 0.7,
       max_tokens: 512,
+      // Model gpt-oss punya reasoning channel. Ditekan supaya latency rendah
+      // dan token reasoning tidak memakan kuota max_tokens balasan.
+      ...(model.includes("gpt-oss")
+        ? { reasoning_effort: "low", reasoning_format: "hidden" }
+        : {}),
     }),
   });
 
