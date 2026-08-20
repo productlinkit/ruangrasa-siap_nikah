@@ -3,6 +3,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        VITE_GROQ_API_KEY: ${VITE_GROQ_API_KEY}
+        VITE_GROQ_MODEL: ${VITE_GROQ_MODEL}
+        VITE_SHEETS_WEBHOOK_URL: ${VITE_SHEETS_WEBHOOK_URL}
+        VITE_WEBHOOK_SECRET: ${VITE_WEBHOOK_SECRET}
     container_name: siapnikah_frontend
     ports:
       - "5173:5173"
