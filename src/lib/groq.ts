@@ -4,24 +4,117 @@ export type GroqMessage = {
 };
 
 const GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
+const MODELS_ENDPOINT = "https://api.groq.com/openai/v1/models";
+const MODEL_CACHE_KEY = "rr:groq:models";
 
 /**
- * SUMBER KEBENARAN model chat ada di file ini, BUKAN di environment.
+ * Model chat TIDAK diambil dari environment.
  *
- * Untuk ganti model: ubah CHAT_MODEL di bawah lalu deploy. Tidak perlu
- * menyentuh env di infra. Env var VITE_GROQ_MODEL sengaja tidak lagi dibaca
- * supaya nilai basi di produksi (mis. model yang sudah dihapus Groq) tidak
- * bisa menimpa nilai yang benar di sini.
+ * Alasannya: VITE_* dibakar ke dalam bundle saat `bun run build` (lihat
+ * Dockerfile), jadi mengubah env berarti minta infra rebuild image. Sebagai
+ * gantinya app menanyakan langsung ke Groq model apa yang sedang hidup, lalu
+ * memilih yang paling disukai dari daftar di bawah. Kalau Groq mendekomisi
+ * sebuah model (seperti llama-3.3-70b-versatile), app pindah sendiri tanpa
+ * perlu ganti kode maupun deploy ulang.
+ *
+ * Urutan = prioritas. Yang di atas dipakai lebih dulu kalau tersedia.
  */
-export const CHAT_MODEL = "openai/gpt-oss-120b";
+export const MODEL_PREFERENCE = [
+  "openai/gpt-oss-120b",
+  "openai/gpt-oss-20b",
+  "groq/compound-mini",
+  "groq/compound",
+];
+
+/** Dipakai kalau daftar model dari Groq gagal diambil (mis. jaringan bermasalah). */
+export const CHAT_MODEL = MODEL_PREFERENCE[0];
+
+type GroqModel = {
+  id: string;
+  active?: boolean;
+  context_window?: number;
+  input_modalities?: string[];
+  output_modalities?: string[];
+};
 
 /**
- * Dipakai otomatis kalau CHAT_MODEL ternyata sudah dihapus Groq (HTTP 404
- * `model_not_found`). Urutan = prioritas. Ini jaring pengaman supaya chatbot
- * tidak mati total saat Groq mendekomisi model, seperti yang terjadi pada
- * llama-3.3-70b-versatile.
+ * Menyaring model yang benar-benar bisa dipakai untuk chat teks. Membuang
+ * whisper (output transkripsi), orpheus (output suara), serta prompt-guard
+ * dan allam yang context window-nya terlalu kecil untuk system prompt kita.
  */
-const FALLBACK_MODELS = ["openai/gpt-oss-20b", "groq/compound-mini"];
+function isChatModel(m: GroqModel): boolean {
+  return (
+    m.active !== false &&
+    !!m.input_modalities?.includes("text") &&
+    !!m.output_modalities?.includes("text") &&
+    (m.context_window ?? 0) >= 8192 &&
+    !/guard/i.test(m.id)
+  );
+}
+
+function readCache(): string[] | null {
+  if (typeof sessionStorage === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(MODEL_CACHE_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return Array.isArray(parsed) && parsed.length ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(models: string[]): void {
+  if (typeof sessionStorage === "undefined") return;
+  try {
+    sessionStorage.setItem(MODEL_CACHE_KEY, JSON.stringify(models));
+  } catch {
+    // Private mode / storage penuh — bukan masalah, cuma kehilangan cache.
+  }
+}
+
+/**
+ * Daftar model kandidat, terurut dari yang paling disukai. Hasilnya di-cache
+ * per sesi browser supaya tidak menembak /v1/models tiap kali kirim pesan.
+ */
+async function resolveCandidates(apiKey: string): Promise<string[]> {
+  const cached = readCache();
+  if (cached) return cached;
+
+  try {
+    const res = await fetch(MODELS_ENDPOINT, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    if (!res.ok) throw new Error(String(res.status));
+
+    const data = await res.json();
+    const live = (data?.data ?? []).filter(isChatModel).map((m: GroqModel) => m.id);
+    if (!live.length) throw new Error("daftar model kosong");
+
+    const liveSet = new Set<string>(live);
+    // Yang kita percaya kualitasnya dulu, sisanya sebagai jaring pengaman
+    // terakhir kalau semua pilihan utama ternyata sudah dihapus.
+    const preferred = MODEL_PREFERENCE.filter((id) => liveSet.has(id));
+    const rest = live.filter((id: string) => !MODEL_PREFERENCE.includes(id));
+    const ordered = [...preferred, ...rest];
+
+    writeCache(ordered);
+    return ordered;
+  } catch {
+    // Gagal menanyakan Groq — pakai daftar statis sebagai cadangan.
+    return MODEL_PREFERENCE;
+  }
+}
+
+/**
+ * Sebagian model (mis. qwen) menuliskan blok penalaran ke dalam content.
+ * Dibuang supaya tidak pernah bocor ke layar pengguna.
+ */
+function stripReasoning(text: string): string {
+  return text
+    .replace(/<think>[\s\S]*?<\/think>/gi, "")
+    .replace(/<\|channel\|>[\s\S]*?<\|message\|>/gi, "")
+    .trim();
+}
 
 export const SYSTEM_PROMPT = `Kamu adalah "Coach RuangRasa", coach AI berbahasa Indonesia untuk persiapan komunikasi & emosional pasangan sebelum menikah (produk: RuangRasa Siap Nikah — siapnikah.ruangrasa.co).
 
@@ -68,7 +161,7 @@ export async function chatWithGroq(
   }
 
   const payload = [...systemMessages, ...messages];
-  const candidates = [CHAT_MODEL, ...FALLBACK_MODELS];
+  const candidates = await resolveCandidates(apiKey);
   let lastError = "";
 
   for (const model of candidates) {
@@ -94,8 +187,9 @@ export async function chatWithGroq(
     if (res.ok) {
       const data = await res.json();
       const content: string | undefined = data?.choices?.[0]?.message?.content;
-      if (!content) throw new Error("Respons Groq kosong.");
-      return content.trim();
+      const clean = content ? stripReasoning(content) : "";
+      if (!clean) throw new Error("Respons Groq kosong.");
+      return clean;
     }
 
     const errText = await res.text().catch(() => "");
