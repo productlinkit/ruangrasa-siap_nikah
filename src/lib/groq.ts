@@ -5,6 +5,24 @@ export type GroqMessage = {
 
 const GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
 
+/**
+ * SUMBER KEBENARAN model chat ada di file ini, BUKAN di environment.
+ *
+ * Untuk ganti model: ubah CHAT_MODEL di bawah lalu deploy. Tidak perlu
+ * menyentuh env di infra. Env var VITE_GROQ_MODEL sengaja tidak lagi dibaca
+ * supaya nilai basi di produksi (mis. model yang sudah dihapus Groq) tidak
+ * bisa menimpa nilai yang benar di sini.
+ */
+export const CHAT_MODEL = "openai/gpt-oss-120b";
+
+/**
+ * Dipakai otomatis kalau CHAT_MODEL ternyata sudah dihapus Groq (HTTP 404
+ * `model_not_found`). Urutan = prioritas. Ini jaring pengaman supaya chatbot
+ * tidak mati total saat Groq mendekomisi model, seperti yang terjadi pada
+ * llama-3.3-70b-versatile.
+ */
+const FALLBACK_MODELS = ["openai/gpt-oss-20b", "groq/compound-mini"];
+
 export const SYSTEM_PROMPT = `Kamu adalah "Coach RuangRasa", coach AI berbahasa Indonesia untuk persiapan komunikasi & emosional pasangan sebelum menikah (produk: RuangRasa Siap Nikah — siapnikah.ruangrasa.co).
 
 Gaya bicara:
@@ -39,45 +57,58 @@ export async function chatWithGroq(
   options?: { extraSystem?: string },
 ): Promise<string> {
   const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-  const model = import.meta.env.VITE_GROQ_MODEL || "openai/gpt-oss-120b";
 
   if (!apiKey) {
     throw new Error("VITE_GROQ_API_KEY belum di-set di environment.");
   }
 
-  const systemMessages: GroqMessage[] = [
-    { role: "system", content: SYSTEM_PROMPT },
-  ];
+  const systemMessages: GroqMessage[] = [{ role: "system", content: SYSTEM_PROMPT }];
   if (options?.extraSystem) {
     systemMessages.push({ role: "system", content: options.extraSystem });
   }
 
-  const res = await fetch(GROQ_ENDPOINT, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      messages: [...systemMessages, ...messages],
-      temperature: 0.7,
-      max_tokens: 512,
-      // Model gpt-oss punya reasoning channel. Ditekan supaya latency rendah
-      // dan token reasoning tidak memakan kuota max_tokens balasan.
-      ...(model.includes("gpt-oss")
-        ? { reasoning_effort: "low", reasoning_format: "hidden" }
-        : {}),
-    }),
-  });
+  const payload = [...systemMessages, ...messages];
+  const candidates = [CHAT_MODEL, ...FALLBACK_MODELS];
+  let lastError = "";
 
-  if (!res.ok) {
+  for (const model of candidates) {
+    const res = await fetch(GROQ_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: payload,
+        temperature: 0.7,
+        max_tokens: 512,
+        // Model gpt-oss punya reasoning channel. Ditekan supaya latency rendah
+        // dan token reasoning tidak memakan kuota max_tokens balasan.
+        ...(model.includes("gpt-oss")
+          ? { reasoning_effort: "low", reasoning_format: "hidden" }
+          : {}),
+      }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const content: string | undefined = data?.choices?.[0]?.message?.content;
+      if (!content) throw new Error("Respons Groq kosong.");
+      return content.trim();
+    }
+
     const errText = await res.text().catch(() => "");
-    throw new Error(`Groq error ${res.status}: ${errText}`);
+    lastError = `Groq error ${res.status}: ${errText}`;
+
+    // Hanya model yang tidak ada yang layak di-retry ke kandidat berikutnya.
+    // Error lain (401 key salah, 429 rate limit, 5xx) harus langsung dilempar
+    // supaya tidak menghabiskan kuota dengan mencoba semua model.
+    const isModelGone = res.status === 404 && errText.includes("model_not_found");
+    if (!isModelGone) throw new Error(lastError);
+
+    console.warn(`[groq] Model "${model}" tidak tersedia, mencoba model cadangan berikutnya.`);
   }
 
-  const data = await res.json();
-  const content: string | undefined = data?.choices?.[0]?.message?.content;
-  if (!content) throw new Error("Respons Groq kosong.");
-  return content.trim();
+  throw new Error(lastError || "Groq error: semua model tidak tersedia.");
 }
